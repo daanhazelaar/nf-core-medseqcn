@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/nf-core/medseqcn/master/assets/schema_input.json",
-    "title": "nf-core/medseqcn pipeline - params.input schema",
+    "$id": "https://raw.githubusercontent.com/nf-core/cfpipe/master/assets/schema_input.json",
+    "title": "nf-core/cfpipe pipeline - params.input schema",
     "description": "Schema for the file provided with params.input",
     "type": "array",
     "items": {
@@ -17,17 +17,33 @@
                 "type": "string",
                 "format": "file-path",
                 "exists": true,
-                "pattern": "^\\S+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 1 must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+                "pattern": "^\\S+\\.f(ast)?q(\\.gz)?$",
+                "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz' or '.fastq'"
             },
             "fastq_2": {
                 "type": "string",
                 "format": "file-path",
                 "exists": true,
-                "pattern": "^\\S+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+                "pattern": "^\\S+\\.f(ast)?q(\\.gz)?$",
+                "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz' or '.fastq'"
+            },
+            "methylated_bam": {
+                "type": "string",
+                "format": "file-path",
+                "pattern": ".*\\.bam$",
+                "errorMessage": "Bam file containing methylated reads from MeD-seq assay."
+            },
+            "assay": {
+                "type": "string",
+                "pattern": "medseq|swgs",
+                "errorMessage": "Assay used for generating sequencing reads."
+            },
+            "sex": {
+                "type": "string",
+                "pattern": "male|female",
+                "errorMessage": "Sex of sample can be used in custom IchorCNA script"
             }
         },
-        "required": ["sample", "fastq_1"]
+        "required": ["sample", "fastq_1", "assay"]
     }
 }

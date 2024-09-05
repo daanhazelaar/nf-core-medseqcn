@@ -1,5 +1,5 @@
 //
-// Subworkflow with functionality specific to the nf-core/medseqcn pipeline
+// Subworkflow with functionality specific to the nf-core/cfpipe pipeline
 //
 
 /*
@@ -83,11 +83,11 @@ workflow PIPELINE_INITIALISATION {
     Channel
         .fromSamplesheet("input")
         .map {
-            meta, fastq_1, fastq_2 ->
+            meta, fastq_1, fastq_2, methylated_bam, assay, sex ->
                 if (!fastq_2) {
-                    return [ meta.id, meta + [ single_end:true ], [ fastq_1 ] ]
+                    return [ meta.id, meta + [ single_end:true ], [ fastq_1 ], methylated_bam, assay, sex ]
                 } else {
-                    return [ meta.id, meta + [ single_end:false ], [ fastq_1, fastq_2 ] ]
+                    return [ meta.id, meta + [ single_end:false ], [ fastq_1, fastq_2 ], methylated_bam, assay, sex ]
                 }
         }
         .groupTuple()
@@ -95,8 +95,8 @@ workflow PIPELINE_INITIALISATION {
             validateInputSamplesheet(it)
         }
         .map {
-            meta, fastqs ->
-                return [ meta, fastqs.flatten() ]
+            meta, fastqs, methylated_bam, assay, sex ->
+                return [ meta, fastqs.flatten(), methylated_bam.flatten(), assay.get(0), sex.get(0) ]
         }
         .set { ch_samplesheet }
 
@@ -140,10 +140,6 @@ workflow PIPELINE_COMPLETION {
             imNotification(summary_params, hook_url)
         }
     }
-
-    workflow.onError {
-        log.error "Pipeline failed. Please refer to troubleshooting docs: https://nf-co.re/docs/usage/troubleshooting"
-    }
 }
 
 /*
@@ -162,7 +158,7 @@ def validateInputParameters() {
 // Validate channels from input samplesheet
 //
 def validateInputSamplesheet(input) {
-    def (metas, fastqs) = input[1..2]
+    def (metas, fastqs, methylated_bam, assay, sex) = input[1..5]
 
     // Check that multiple runs of the same sample are of the same datatype i.e. single-end / paired-end
     def endedness_ok = metas.collect{ it.single_end }.unique().size == 1
@@ -170,7 +166,7 @@ def validateInputSamplesheet(input) {
         error("Please check input samplesheet -> Multiple runs of a sample must be of the same datatype i.e. single-end or paired-end: ${metas[0].id}")
     }
 
-    return [ metas[0], fastqs ]
+    return [ metas[0], fastqs, methylated_bam, assay, sex ]
 }
 //
 // Get attribute from genome config file e.g. fasta
@@ -234,16 +230,8 @@ def methodsDescriptionText(mqc_methods_yaml) {
     meta["manifest_map"] = workflow.manifest.toMap()
 
     // Pipeline DOI
-    if (meta.manifest_map.doi) {
-        // Using a loop to handle multiple DOIs
-        // Removing `https://doi.org/` to handle pipelines using DOIs vs DOI resolvers
-        // Removing ` ` since the manifest.doi is a string and not a proper list
-        def temp_doi_ref = ""
-        String[] manifest_doi = meta.manifest_map.doi.tokenize(",")
-        for (String doi_ref: manifest_doi) temp_doi_ref += "(doi: <a href=\'https://doi.org/${doi_ref.replace("https://doi.org/", "").replace(" ", "")}\'>${doi_ref.replace("https://doi.org/", "").replace(" ", "")}</a>), "
-        meta["doi_text"] = temp_doi_ref.substring(0, temp_doi_ref.length() - 2)
-    } else meta["doi_text"] = ""
-    meta["nodoi_text"] = meta.manifest_map.doi ? "" : "<li>If available, make sure to update the text to include the Zenodo DOI of version of the pipeline used. </li>"
+    meta["doi_text"] = meta.manifest_map.doi ? "(doi: <a href=\'https://doi.org/${meta.manifest_map.doi}\'>${meta.manifest_map.doi}</a>)" : ""
+    meta["nodoi_text"] = meta.manifest_map.doi ? "": "<li>If available, make sure to update the text to include the Zenodo DOI of version of the pipeline used. </li>"
 
     // Tool references
     meta["tool_citations"] = ""

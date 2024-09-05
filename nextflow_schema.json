@@ -1,8 +1,8 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/nf-core/medseqcn/master/nextflow_schema.json",
-    "title": "nf-core/medseqcn pipeline parameters",
-    "description": "",
+    "$id": "https://raw.githubusercontent.com/nf-core/cfpipe/master/nextflow_schema.json",
+    "title": "nf-core/cfpipe pipeline parameters",
+    "description": "An analysis pipeline for sequencing data from cell free (cf) DNA",
     "type": "object",
     "definitions": {
         "input_output_options": {
@@ -20,7 +20,7 @@
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
                     "description": "Path to comma-separated file containing information about the samples in the experiment.",
-                    "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://nf-co.re/medseqcn/usage#samplesheet-input).",
+                    "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://nf-co.re/cfpipe/usage#samplesheet-input).",
                     "fa_icon": "fas fa-file-csv"
                 },
                 "outdir": {
@@ -39,6 +39,61 @@
                 "multiqc_title": {
                     "type": "string",
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
+                    "fa_icon": "fas fa-file-signature"
+                },
+                "insert_size_selection": {
+                    "type": "boolean",
+                    "description": "Should reads with min/max insert size be selected.",
+                    "fa_icon": "fas fa-file-signature"
+                },
+                "min_size_selection": {
+                    "type": "integer",
+                    "description": "Minimum length of read insert size.",
+                    "fa_icon": "fas fa-file-signature"
+                },
+                "max_size_selection": {
+                    "type": "integer",
+                    "description": "Maximum length of read insert size.",
+                    "fa_icon": "fas fa-file-signature"
+                },
+                "remove_read_low_mapq": {
+                    "type": "boolean",
+                    "description": "Should reads with below min_mapq be removed.",
+                    "fa_icon": "fas fa-file-signature"
+                },
+                "min_mapq": {
+                    "type": "integer",
+                    "description": "Minimum MAPW of reads to keep.",
+                    "fa_icon": "fas fa-file-signature"
+                },
+                "ichorcna_custom": {
+                    "type": "boolean",
+                    "format": "path",
+                    "description": "Use custom IchorCNA script.",
+                    "fa_icon": "fas fa-file-signature"
+                },
+                "gc_wig": {
+                    "type": "string",
+                    "format": "path",
+                    "description": "GC content file for IchorCNA",
+                    "fa_icon": "fas fa-file-signature"
+                },
+                "map_wig": {
+                    "type": "string",
+                    "format": "path",
+                    "description": "Mapping bias file for IchorCNA",
+                    "fa_icon": "fas fa-file-signature"
+                },
+                "panel_of_normals": {
+                    "type": "string",
+                    "format": "path",
+                    "description": "Panel of normals file for IchorCNA",
+                    "fa_icon": "fas fa-file-signature"
+                },
+                "centromere": {
+                    "type": "string",
+                    "format": "path",
+                    "description": "Centromere file for IchorCNA",
                     "fa_icon": "fas fa-file-signature"
                 }
             }
@@ -65,12 +120,26 @@
                     "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
                     "fa_icon": "far fa-file-code"
                 },
+                "bwa_index": {
+                    "type": "string",
+                    "format": "path",
+                    "exists": true,
+                    "description": "Path to directory or tar.gz archive for pre-built BWA index.",
+                    "fa_icon": "fas fa-bezier-curve"
+                },
                 "igenomes_ignore": {
                     "type": "boolean",
                     "description": "Do not load the iGenomes reference config.",
                     "fa_icon": "fas fa-ban",
                     "hidden": true,
                     "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
+                },
+                "blacklist": {
+                    "type": "string",
+                    "format": "path",
+                    "exists": true,
+                    "description": "Path to ENCODE blacklist file.",
+                    "fa_icon": "fas fa-bezier-curve"
                 }
             }
         },
@@ -265,13 +334,6 @@
                     "description": "Validation of parameters in lenient more.",
                     "hidden": true,
                     "help_text": "Allows string values that are parseable as numbers or booleans. For further information see [JSONSchema docs](https://github.com/everit-org/json-schema#lenient-mode)."
-                },
-                "pipelines_testdata_base_path": {
-                    "type": "string",
-                    "fa_icon": "far fa-check-circle",
-                    "description": "Base URL or local path to location of pipeline test dataset files",
-                    "default": "https://raw.githubusercontent.com/nf-core/test-datasets/",
-                    "hidden": true
                 }
             }
         }

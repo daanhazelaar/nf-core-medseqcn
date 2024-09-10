@@ -31,18 +31,19 @@ workflow SUBSET_MEDSEQ_DATA {
 
     // MODULE: SUB_SET_BAM_READ_IDS
     SUBSET_BAM_READ_IDS (
-        ch_reads_split_assay.medseq.map{ meta, bam, bai, fastq, methylated_bam, assay, sex -> return[ meta, bam, bai ]},
-        fasta.map{[ [:], it]},
-        GET_READ_IDS_FROM_BAM.out.map{ meta, readIDs -> return[ readIDs ]}
+        ch_reads_split_assay.medseq
+            .map{ meta, bam, bai, fastq, methylated_bam, assay, sex -> return[ meta, bam, bai ]}
+            .join(GET_READ_IDS_FROM_BAM.out),
+        fasta.map{[ [:], it]}
     )
 
     // MODULE: SAMTOOLS_INDEX
     SAMTOOLS_INDEX (
-        SUBSET_BAM_READ_IDS.out.bam
+        SUBSET_BAM_READ_IDS.out.unselected
     )
 
     // Combinde subset medseq data and swgs data in channel
-    SUBSET_BAM_READ_IDS.out.bam
+    SUBSET_BAM_READ_IDS.out.unselected
         .join(SAMTOOLS_INDEX.out.bai)
         .join(samplesheet)
         .mix(ch_reads_split_assay.swgs)
@@ -51,8 +52,6 @@ workflow SUBSET_MEDSEQ_DATA {
     emit:
     bam = out.map{meta, bam, index, fastq, methylated_bam, assay, sex -> [ meta, bam ]}
     bai = out.map{meta, bam, index, fastq, methylated_bam, assay, sex -> [ meta, index ]}
-
-    // out // channel: [ val(meta), [ bam ] [ index] [fastq] [methylated_bam] [assay] [sex]]
 
 }
 

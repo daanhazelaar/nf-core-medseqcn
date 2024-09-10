@@ -197,20 +197,31 @@ workflow MEDSEQCN {
     )
 
     // MUDOLE: ICHORCNA_RUN_CUSTOM
-    // ch_gc_wig = Channel.value(file(params.gc_wig))
-    // ch_map_wig = Channel.value(file(params.map_wig))
-    // ch_panel_of_normals = Channel.value(file(params.panel_of_normals))
-    // ch_gc_centromere = Channel.value(file(params.centromere))
-    // ch_samplesheet.map{meta, fastqs, methylated_bam, assay, sex -> return[ meta, sex ]}
+    HMMCOPY_READCOUNTER.out.wig
+        .join(ch_samplesheet)
+        .map{meta, wig, fastq, methylated_bam, assay, sex -> return[ meta, wig, assay, sex ]}
+        .branch { meta, wig, assay, sex ->
+            medseq: assay == "medseq"
+            swgs: assay == "swgs"
+        }
+        .set{ ch_reads_split_assay_wig }
 
+    ch_reads_split_assay_wig.medseq
+        .combine(Channel.value(file(params.panel_of_normals_medseq)))
+        .mix(
+            ch_reads_split_assay_wig.swgs
+                .combine(Channel.value(file(params.panel_of_normals_swgs)))
+        )
+        .map{meta, wig, assay, sex, panel_of_normals -> return[ meta, wig, sex, panel_of_normals ]}
+        .set{input_ichorcna}
+
+    input_ichorcna.view()
 
     ICHORCNA_RUN_CUSTOM (
-        HMMCOPY_READCOUNTER.out.wig,
+        input_ichorcna,
         Channel.value(file(params.gc_wig)),
         Channel.value(file(params.map_wig)),
-        Channel.value(file(params.panel_of_normals)),
-        Channel.value(file(params.centromere)),
-        ch_samplesheet.map{meta, fastqs, methylated_bam, assay, sex -> return[ meta, sex ]}
+        Channel.value(file(params.centromere)),        
     )
 
 

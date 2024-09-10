@@ -9,13 +9,10 @@ process ICHORCNA_RUN_CUSTOM {
         'biocontainers/r-ichorcna:0.3.2--pl5321r42hdfd78af_2' }"
 
     input:
-    tuple val(meta), path(wig)
+    tuple val(meta), path(wig), val(sex), path(panel_of_normals)
     path gc_wig
     path map_wig
-    path panel_of_normals
     path centromere
-    tuple val(meta), val(sex)
-
 
     output:
     // tuple val(meta), path("${meta.id}.cna.seg")     , emit: seg_cna

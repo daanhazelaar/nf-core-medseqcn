@@ -84,7 +84,13 @@
                     "description": "Mapping bias file for IchorCNA",
                     "fa_icon": "fas fa-file-signature"
                 },
-                "panel_of_normals": {
+                "panel_of_normals_swgs": {
+                    "type": "string",
+                    "format": "path",
+                    "description": "Panel of normals file for IchorCNA",
+                    "fa_icon": "fas fa-file-signature"
+                },
+                "panel_of_normals_medseq": {
                     "type": "string",
                     "format": "path",
                     "description": "Panel of normals file for IchorCNA",

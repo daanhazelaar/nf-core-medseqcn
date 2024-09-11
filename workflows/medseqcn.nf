@@ -215,8 +215,6 @@ workflow MEDSEQCN {
         .map{meta, wig, assay, sex, panel_of_normals -> return[ meta, wig, sex, panel_of_normals ]}
         .set{input_ichorcna}
 
-    input_ichorcna.view()
-
     ICHORCNA_RUN_CUSTOM (
         input_ichorcna,
         Channel.value(file(params.gc_wig)),

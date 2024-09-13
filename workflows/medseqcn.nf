@@ -180,18 +180,18 @@ workflow MEDSEQCN {
         PREPARE_REFERENCE_GENOME.out.chrom_sizes
     )
 
-
     // SUBWORKFLOW: SUBSAMPLE_BAM
-    SUBSAMPLE_BAM (
-        REMOVE_BLACKLIST_REGIONS.out.bam,
-        REMOVE_BLACKLIST_REGIONS.out.bai,
-        PREPARE_REFERENCE_GENOME.out.fasta.map{[ [:], it]}
-    )
-
+    if (params.subsample) {
+        SUBSAMPLE_BAM (
+            REMOVE_BLACKLIST_REGIONS.out.bam,
+            REMOVE_BLACKLIST_REGIONS.out.bai,
+            PREPARE_REFERENCE_GENOME.out.fasta.map{[ [:], it]}
+        )
+    }
 
     // SUBWORKFLOW: BAM_SORT_STATS_SAMTOOLS
     BAM_SORT_STATS_SAMTOOLS (
-        REMOVE_BLACKLIST_REGIONS.out.bam,
+        (params.subsample ? SUBSAMPLE_BAM.out.bam : REMOVE_BLACKLIST_REGIONS.out.bam),
         PREPARE_REFERENCE_GENOME.out.fasta.map{[ [:], it]}
     )
 
@@ -204,34 +204,34 @@ workflow MEDSEQCN {
 
     // MUDOLE: HMMCOPY_READCOUNTER
     HMMCOPY_READCOUNTER (
-        REMOVE_BLACKLIST_REGIONS.out.bam.join(REMOVE_BLACKLIST_REGIONS.out.bai),
+        BAM_SORT_STATS_SAMTOOLS.out.bam.join(BAM_SORT_STATS_SAMTOOLS.out.bai)
     )
 
-    // // MUDOLE: ICHORCNA_RUN_CUSTOM
-    // HMMCOPY_READCOUNTER.out.wig
-    //     .join(ch_samplesheet)
-    //     .map{meta, wig, fastq, methylated_bam, assay, sex -> return[ meta, wig, assay, sex ]}
-    //     .branch { meta, wig, assay, sex ->
-    //         medseq: assay == "medseq"
-    //         swgs: assay == "swgs"
-    //     }
-    //     .set{ ch_reads_split_assay_wig }
+    // MUDOLE: ICHORCNA_RUN_CUSTOM
+    HMMCOPY_READCOUNTER.out.wig
+        .join(ch_samplesheet)
+        .map{meta, wig, fastq, methylated_bam, assay, sex -> return[ meta, wig, assay, sex ]}
+        .branch { meta, wig, assay, sex ->
+            medseq: assay == "medseq"
+            swgs: assay == "swgs"
+        }
+        .set{ ch_reads_split_assay_wig }
 
-    // ch_reads_split_assay_wig.medseq
-    //     .combine(Channel.value(file(params.panel_of_normals_medseq)))
-    //     .mix(
-    //         ch_reads_split_assay_wig.swgs
-    //             .combine(Channel.value(file(params.panel_of_normals_swgs)))
-    //     )
-    //     .map{meta, wig, assay, sex, panel_of_normals -> return[ meta, wig, sex, panel_of_normals ]}
-    //     .set{input_ichorcna}
+    ch_reads_split_assay_wig.medseq
+        .combine(Channel.value(file(params.panel_of_normals_medseq)))
+        .mix(
+            ch_reads_split_assay_wig.swgs
+                .combine(Channel.value(file(params.panel_of_normals_swgs)))
+        )
+        .map{meta, wig, assay, sex, panel_of_normals -> return[ meta, wig, sex, panel_of_normals ]}
+        .set{input_ichorcna}
 
-    // ICHORCNA_RUN_CUSTOM (
-    //     input_ichorcna,
-    //     Channel.value(file(params.gc_wig)),
-    //     Channel.value(file(params.map_wig)),
-    //     Channel.value(file(params.centromere)),
-    // )
+    ICHORCNA_RUN_CUSTOM (
+        input_ichorcna,
+        Channel.value(file(params.gc_wig)),
+        Channel.value(file(params.map_wig)),
+        Channel.value(file(params.centromere)),
+    )
 
 
     emit:

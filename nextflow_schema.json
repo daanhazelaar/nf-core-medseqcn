@@ -66,6 +66,18 @@
                     "description": "Minimum MAPW of reads to keep.",
                     "fa_icon": "fas fa-file-signature"
                 },
+                "subsample": {
+                    "type": "boolean",
+                    "format": "path",
+                    "description": "Perform random subsampling of bam file",
+                    "fa_icon": "fas fa-file-signature"
+                },
+                "subsample_fractions": {
+                    "type": "list",
+                    "format": "path",
+                    "description": "Subsampling fractions",
+                    "fa_icon": "fas fa-file-signature"
+                },
                 "ichorcna_custom": {
                     "type": "boolean",
                     "format": "path",

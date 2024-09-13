@@ -191,7 +191,7 @@ workflow MEDSEQCN {
 
     // SUBWORKFLOW: BAM_SORT_STATS_SAMTOOLS
     BAM_SORT_STATS_SAMTOOLS (
-        REMOVE_BLACKLIST_REGIONS.out.bam,
+        SUBSAMPLE_BAM.out.bam,
         PREPARE_REFERENCE_GENOME.out.fasta.map{[ [:], it]}
     )
 
@@ -204,7 +204,7 @@ workflow MEDSEQCN {
 
     // MUDOLE: HMMCOPY_READCOUNTER
     HMMCOPY_READCOUNTER (
-        REMOVE_BLACKLIST_REGIONS.out.bam.join(REMOVE_BLACKLIST_REGIONS.out.bai),
+        BAM_SORT_STATS_SAMTOOLS.out.bam.join(BAM_SORT_STATS_SAMTOOLS.out.bai),
     )
 
     // // MUDOLE: ICHORCNA_RUN_CUSTOM

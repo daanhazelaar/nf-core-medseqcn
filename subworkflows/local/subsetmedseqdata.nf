@@ -1,6 +1,6 @@
 
 include { GET_READ_IDS_FROM_BAM     } from '../../modules/local/getreadidsfrombam.nf'
-include { SAMTOOLS_VIEW as SUBSET_BAM_READ_IDS } from '../../modules/nf-core/samtools/view/main'
+include { SUBSET_BAM_READ_IDS } from '../../modules/local/subsetbamreadids.nf'
 include { SAMTOOLS_INDEX  } from '../../modules/nf-core/samtools/index/main'
 
 workflow SUBSET_MEDSEQ_DATA {

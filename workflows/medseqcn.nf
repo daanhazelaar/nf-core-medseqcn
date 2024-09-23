@@ -183,6 +183,7 @@ workflow MEDSEQCN {
     // SUBWORKFLOW: SUBSAMPLE_BAM
     if (params.subsample) {
         SUBSAMPLE_BAM (
+            ch_samplesheet,
             REMOVE_BLACKLIST_REGIONS.out.bam,
             REMOVE_BLACKLIST_REGIONS.out.bai,
             PREPARE_REFERENCE_GENOME.out.fasta.map{[ [:], it]}
@@ -191,7 +192,7 @@ workflow MEDSEQCN {
 
     // SUBWORKFLOW: BAM_SORT_STATS_SAMTOOLS
     BAM_SORT_STATS_SAMTOOLS (
-        (params.subsample ? SUBSAMPLE_BAM.out.bam : REMOVE_BLACKLIST_REGIONS.out.bam),
+        (params.subsample ? SUBSAMPLE_BAM.out.bam.map{meta, bam, bai, subsample, assay, sex -> return [ meta, bam]} : REMOVE_BLACKLIST_REGIONS.out.bam),
         PREPARE_REFERENCE_GENOME.out.fasta.map{[ [:], it]}
     )
 
@@ -207,32 +208,18 @@ workflow MEDSEQCN {
         BAM_SORT_STATS_SAMTOOLS.out.bam.join(BAM_SORT_STATS_SAMTOOLS.out.bai)
     )
 
-    // MUDOLE: ICHORCNA_RUN_CUSTOM
-    HMMCOPY_READCOUNTER.out.wig
-        .join(ch_samplesheet)
-        .map{meta, wig, fastq, methylated_bam, assay, sex -> return[ meta, wig, assay, sex ]}
-        .branch { meta, wig, assay, sex ->
-            medseq: assay == "medseq"
-            swgs: assay == "swgs"
-        }
-        .set{ ch_reads_split_assay_wig }
-
-    ch_reads_split_assay_wig.medseq
-        .combine(Channel.value(file(params.panel_of_normals_medseq)))
-        .mix(
-            ch_reads_split_assay_wig.swgs
-                .combine(Channel.value(file(params.panel_of_normals_swgs)))
-        )
-        .map{meta, wig, assay, sex, panel_of_normals -> return[ meta, wig, sex, panel_of_normals ]}
+    SUBSAMPLE_BAM.out.bam
+        .map{meta, bam, bai, subsample, assay, sex -> return [ meta, subsample, assay, sex]}
+        .join(HMMCOPY_READCOUNTER.out.wig)
         .set{input_ichorcna}
 
     ICHORCNA_RUN_CUSTOM (
-        input_ichorcna,
+        input_ichorcna.map{meta, subsample, assay, sex, wig -> return [ meta, wig, sex]},
+        Channel.value(file(params.panel_of_normals_medseq)),
         Channel.value(file(params.gc_wig)),
         Channel.value(file(params.map_wig)),
         Channel.value(file(params.centromere)),
     )
-
 
     emit:
     multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html

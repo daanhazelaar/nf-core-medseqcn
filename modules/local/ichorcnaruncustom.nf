@@ -9,7 +9,8 @@ process ICHORCNA_RUN_CUSTOM {
         'biocontainers/r-ichorcna:0.3.2--pl5321r42hdfd78af_2' }"
 
     input:
-    tuple val(meta), path(wig), val(sex), path(panel_of_normals)
+    tuple val(meta), path(wig), val(sex)
+    path(panel_of_normals)
     path gc_wig
     path map_wig
     path centromere
@@ -20,7 +21,7 @@ process ICHORCNA_RUN_CUSTOM {
     // tuple val(meta), path("${meta.id}.seg")         , emit: seg
     // tuple val(meta), path("${meta.id}.params.txt")  , emit: ichorcna_params
     path "versions.yml"                             , emit: versions
-    path "${meta.id}_ichorCNA_files"                               , emit: outputDir
+    path "${meta.id}_subsample_${meta.subsample_fraction}_ichorCNA_files", emit: outputDir
     // path "${meta.id}.RData"                         , emit: rdata_object
     // path "${meta.id}.ALL_RESULTS.RData"             , emit: all_results
 
@@ -46,11 +47,11 @@ process ICHORCNA_RUN_CUSTOM {
         ${sex} \\
         --outDir .
 
-    mkdir ./${meta.id}_ichorCNA_files
-    cp -r ${meta.id}.ALL_RESULTS.RData ./${meta.id}_ichorCNA_files
-    cp -r ${meta.id}.RData ./${meta.id}_ichorCNA_files
-    cp -r ${meta.id}.seg ./${meta.id}_ichorCNA_files
-    cp -r ${meta.id}/ ./${meta.id}_ichorCNA_files
+    mkdir ./${meta.id}_subsample_${meta.subsample_fraction}_ichorCNA_files
+    cp -r ${meta.id}_subsample_${meta.subsample_fraction}.ALL_RESULTS.RData ./${meta.id}_subsample_${meta.subsample_fraction}_ichorCNA_files
+    cp -r ${meta.id}_subsample_${meta.subsample_fraction}.RData ./${meta.id}_subsample_${meta.subsample_fraction}_ichorCNA_files
+    cp -r ${meta.id}_subsample_${meta.subsample_fraction}.seg ./${meta.id}_subsample_${meta.subsample_fraction}_ichorCNA_files
+    cp -r ${meta.id}_subsample_${meta.subsample_fraction}/ ./${meta.id}_subsample_${meta.subsample_fraction}_ichorCNA_files
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

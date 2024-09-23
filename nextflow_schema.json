@@ -73,7 +73,7 @@
                     "fa_icon": "fas fa-file-signature"
                 },
                 "subsample_fractions": {
-                    "type": "list",
+                    "type": "array",
                     "format": "path",
                     "description": "Subsampling fractions",
                     "fa_icon": "fas fa-file-signature"

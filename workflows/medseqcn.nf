@@ -12,6 +12,7 @@ include { softwareVersionsToYAML    } from '../subworkflows/nf-core/utils_nfcore
 include { methodsDescriptionText    } from '../subworkflows/local/utils_nfcore_medseqcn_pipeline'
 
 include { PREPARE_REFERENCE_GENOME  } from '../subworkflows/local/prepare_reference_genome'
+include { PIGZ_COMPRESS             } from '../modules/nf-core/pigz/compress/main'
 
 include { FASTP                     } from '../modules/nf-core/fastp/main'
 include { BWA_MEM                   } from '../modules/nf-core/bwa/mem/main'
@@ -107,13 +108,18 @@ workflow MEDSEQCN {
         ch_multiqc_logo.toList()
     )
 
+    // MODULE: PIGZ_COMPRESS
+    PIGZ_COMPRESS (
+        ch_samplesheet.map{meta, fastqs, methylated_bam, assay, sex -> return[ meta, fastqs ]}
+    )
+
     // MODULE: FASTP
     discard_trimmed_pass = false
     save_trimmed_fail = false
     save_merged = false
 
     FASTP (
-        ch_samplesheet.map{meta, fastqs, methylated_bam, assay, sex -> return[ meta, fastqs ]},
+        PIGZ_COMPRESS.out.archive,
         [],
         discard_trimmed_pass,
         save_trimmed_fail,

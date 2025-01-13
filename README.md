@@ -66,19 +66,8 @@ Now, you can run the pipeline using:
 nextflow run nf-core/medseqcn \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
+   -c nextflow.config
    --outdir <OUTDIR>
-```
-
-I run the pipeline from a seperate directory and add some usefull additional arguments:
-```bash
-nextflow run ../../nf-core-medseqcn  \
-  -resume \
-  -with-report  \
-  -profile docker,arm \
-  --input ./samplesheet_hbd_swgs.csv \
-  --outdir ./results/ \
-  -c ./conf/hbd_swgs.config \
-  -work-dir ./work/ 
 ```
 
 > [!WARNING]

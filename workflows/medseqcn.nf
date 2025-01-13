@@ -4,31 +4,31 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { FASTQC                    } from '../modules/nf-core/fastqc/main'
-include { MULTIQC                   } from '../modules/nf-core/multiqc/main'
-include { paramsSummaryMap          } from 'plugin/nf-validation'
-include { paramsSummaryMultiqc      } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { softwareVersionsToYAML    } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { methodsDescriptionText    } from '../subworkflows/local/utils_nfcore_medseqcn_pipeline'
+include { FASTQC                                    } from '../modules/nf-core/fastqc/main'
+include { MULTIQC                                   } from '../modules/nf-core/multiqc/main'
+include { paramsSummaryMap                          } from 'plugin/nf-validation'
+include { paramsSummaryMultiqc                      } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { softwareVersionsToYAML                    } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { methodsDescriptionText                    } from '../subworkflows/local/utils_nfcore_medseqcn_pipeline'
 
-include { PREPARE_REFERENCE_GENOME  } from '../subworkflows/local/prepare_reference_genome'
+include { PREPARE_REFERENCE_GENOME                  } from '../subworkflows/local/prepare_reference_genome'
 
-include { FASTP                     } from '../modules/nf-core/fastp/main'
-include { BWA_MEM                   } from '../modules/nf-core/bwa/mem/main'
+include { FASTP                                     } from '../modules/nf-core/fastp/main'
+include { BWA_MEM                                   } from '../modules/nf-core/bwa/mem/main'
 include { SAMTOOLS_SORT as SAMTOOLS_SORT_RAW        } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_RAW      } from '../modules/nf-core/samtools/index/main'
 
-include { SUBSET_MEDSEQ_DATA        } from '../subworkflows/local/subsetmedseqdata.nf'
-include { SIZE_SELECTION            } from '../modules/local/sizeselection.nf'
-include { SAMBAMBA_MARKDUP          } from '../modules/nf-core/sambamba/markdup/main'
-include { FILTER_MAPQ               } from '../subworkflows/local/filtermapq.nf'
-include { REMOVE_BLACKLIST_REGIONS  } from '../subworkflows/local/removeblacklistregions.nf'
+include { SUBSET_MEDSEQ_DATA                        } from '../subworkflows/local/subsetmedseqdata.nf'
+include { SIZE_SELECTION                            } from '../modules/local/sizeselection.nf'
+include { SAMBAMBA_MARKDUP                          } from '../modules/nf-core/sambamba/markdup/main'
+include { FILTER_MAPQ                               } from '../subworkflows/local/filtermapq.nf'
+include { REMOVE_BLACKLIST_REGIONS                  } from '../subworkflows/local/removeblacklistregions.nf'
 
-include { BAM_SORT_STATS_SAMTOOLS   } from '../subworkflows/nf-core/bam_sort_stats_samtools/main'
-include { SAMTOOLS_COVERAGE         } from '../modules/nf-core/samtools/coverage/main'
+include { BAM_SORT_STATS_SAMTOOLS                   } from '../subworkflows/nf-core/bam_sort_stats_samtools/main'
+include { SAMTOOLS_COVERAGE                         } from '../modules/nf-core/samtools/coverage/main'
 
-include { HMMCOPY_READCOUNTER       } from '../modules/nf-core/hmmcopy/readcounter/main'
-include { ICHORCNA_RUN_CUSTOM       } from '../modules/local/ichorcnaruncustom.nf'
+include { HMMCOPY_READCOUNTER                       } from '../modules/nf-core/hmmcopy/readcounter/main'
+include { ICHORCNA_RUN_CUSTOM                       } from '../modules/local/ichorcnaruncustom.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -193,7 +193,7 @@ workflow MEDSEQCN {
 
     // MUDOLE: HMMCOPY_READCOUNTER
     HMMCOPY_READCOUNTER (
-        REMOVE_BLACKLIST_REGIONS.out.bam.join(REMOVE_BLACKLIST_REGIONS.out.bai),
+        BAM_SORT_STATS_SAMTOOLS.out.bam.join(BAM_SORT_STATS_SAMTOOLS.out.bai),
     )
 
     // MUDOLE: ICHORCNA_RUN_CUSTOM

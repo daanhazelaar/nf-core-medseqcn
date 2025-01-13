@@ -1,9 +1,3 @@
-<h1>
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/nf-core-medseqcn_logo_dark.png">
-    <img alt="nf-core/medseqcn" src="docs/images/nf-core-medseqcn_logo_light.png">
-  </picture>
-</h1>
 
 [![GitHub Actions CI Status](https://github.com/nf-core/medseqcn/actions/workflows/ci.yml/badge.svg)](https://github.com/nf-core/medseqcn/actions/workflows/ci.yml)
 [![GitHub Actions Linting Status](https://github.com/nf-core/medseqcn/actions/workflows/linting.yml/badge.svg)](https://github.com/nf-core/medseqcn/actions/workflows/linting.yml)[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/medseqcn/results)[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
@@ -19,12 +13,7 @@
 
 ## Introduction
 
-**nf-core/medseqcn** is a bioinformatics pipeline that ...
-
-<!-- TODO nf-core:
-   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
-   major pipeline sections and the types of output it produces. You're giving an overview to someone new
-   to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
+**nf-core/medseqcn** is a bioinformatics pipeline that pre-processes, aligns, and processes MeD-seq or sWGS data obtained from cfDNA and returns Copy Number (CN) profiles and Tumor Fraction (TF) estimates for each sample in addition to all processed genomic data.
 -->
 
 <!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
@@ -33,6 +22,17 @@
 
 1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
 2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+3. Adapter removal (['fastp'])(https://github.com/OpenGene/fastp)
+4. Read for alignment (['bwa'])(https://bio-bwa.sourceforge.net/bwa.shtml)
+5. Sorting and indexing of bam file (['samtools_sort'])(http://www.htslib.org/doc/samtools-sort.html)  (['samtools_index'])(http://www.htslib.org/doc/samtools-index.html)
+6. (Med-seq only) extract background reads
+7. (optional) fragment size selection
+8. (optional) remove duplicate reads (['sambamba_markdup'])(https://lomereiter.github.io/sambamba/docs/sambamba-markdup.html)
+9. (optional) Remove low MAPQ reads 
+10. (optional) Remove reads in blacklisted (ENCODE) regions 
+11. Get various summary statisics of bam file (['samtools_coverage'])(http://wwwhttp://www.htslib.org/doc/samtools-coverage.html.htslib.org/doc/samtools-stats.html) (['samtools_stats'])(http://www.htslib.org/doc/samtools-stats.html) (['samtools_flagstat'])(http://www.htslib.org/doc/samtools-flagstat.html) (['samtools_idxstats'])(http://www.htslib.org/doc/samtools-idxstats.html) 
+12. Counting binned reads (['hmmcopy_readCounter'])(https://github.com/shahcompbio/hmmcopy_utils)
+13. Copy number profiling and tumor fraction estimation (['ichorCNA'])(https://github.com/broadinstitute/ichorCNA)
 
 ## Usage
 
@@ -70,7 +70,7 @@ nextflow run nf-core/medseqcn \
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
 > see [docs](https://nf-co.re/usage/configuration#custom-configuration-files).
 
-For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/medseqcn/usage) and the [parameter documentation](https://nf-co.re/medseqcn/parameters).
+<!--For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/medseqcn/usage) and the [parameter documentation](https://nf-co.re/medseqcn/parameters). -->
 
 ## Pipeline output
 

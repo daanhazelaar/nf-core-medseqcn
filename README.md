@@ -13,31 +13,34 @@
 
 ## Introduction
 
-**nf-core/medseqcn** is a bioinformatics pipeline that pre-processes, aligns, and processes MeD-seq or sWGS data obtained from cfDNA and returns Copy Number (CN) profiles and Tumor Fraction (TF) estimates for each sample in addition to all processed genomic data.
--->
+**nf-core/medseqcn** is a bioinformatics pipeline designed to pre-process, align, and analyze MeD-seq or sWGS data derived from cfDNA. It generates Copy Number (CN) profiles and Tumor Fraction (TF) estimates for each sample while providing all processed genomic data as output.
 
+This pipeline was developed using the nf-core template and adheres to nf-core coding principles. However, it has not yet undergone community review and is not currently available on the nf-core platform.
+ 
 <!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
      workflows use the "tube map" design for that. See https://nf-co.re/docs/contributing/design_guidelines#examples for examples.   -->
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
 1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
 2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
-3. Adapter removal (['fastp'])(https://github.com/OpenGene/fastp)
-4. Read for alignment (['bwa'])(https://bio-bwa.sourceforge.net/bwa.shtml)
-5. Sorting and indexing of bam file (['samtools_sort'])(http://www.htslib.org/doc/samtools-sort.html)  (['samtools_index'])(http://www.htslib.org/doc/samtools-index.html)
+3. Adapter removal ([`fastp`])(https://github.com/OpenGene/fastp)
+4. Read for alignment ([`bwa`])(https://bio-bwa.sourceforge.net/bwa.shtml)
+5. Sorting and indexing of bam file ([`samtools_sort`])(http://www.htslib.org/doc/samtools-sort.html)  ([`samtools_index`])(http://www.htslib.org/doc/samtools-index.html)
 6. (Med-seq only) extract background reads
 7. (optional) fragment size selection
-8. (optional) remove duplicate reads (['sambamba_markdup'])(https://lomereiter.github.io/sambamba/docs/sambamba-markdup.html)
+8. (optional) remove duplicate reads ([`sambamba_markdup`])(https://lomereiter.github.io/sambamba/docs/sambamba-markdup.html)
 9. (optional) Remove low MAPQ reads 
 10. (optional) Remove reads in blacklisted (ENCODE) regions 
-11. Get various summary statisics of bam file (['samtools_coverage'])(http://wwwhttp://www.htslib.org/doc/samtools-coverage.html.htslib.org/doc/samtools-stats.html) (['samtools_stats'])(http://www.htslib.org/doc/samtools-stats.html) (['samtools_flagstat'])(http://www.htslib.org/doc/samtools-flagstat.html) (['samtools_idxstats'])(http://www.htslib.org/doc/samtools-idxstats.html) 
-12. Counting binned reads (['hmmcopy_readCounter'])(https://github.com/shahcompbio/hmmcopy_utils)
-13. Copy number profiling and tumor fraction estimation (['ichorCNA'])(https://github.com/broadinstitute/ichorCNA)
+11. Get various summary statisics of bam file ([`samtools_coverage`])(http://wwwhttp://www.htslib.org/doc/samtools-coverage.html.htslib.org/doc/samtools-stats.html) ([`samtools_stats`])(http://www.htslib.org/doc/samtools-stats.html) ([`samtools_flagstat`])(http://www.htslib.org/doc/samtools-flagstat.html) ([`samtools_idxstats`])(http://www.htslib.org/doc/samtools-idxstats.html) 
+12. Counting binned reads ([`hmmcopy_readCounter`])(https://github.com/shahcompbio/hmmcopy_utils)
+13. Copy number profiling and tumor fraction estimation ([`ichorCNA`])(https://github.com/broadinstitute/ichorCNA)
 
 ## Usage
 
 > [!NOTE]
-> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.
+> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. 
+
+<!-- Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.  -->
 
 <!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
      Explain what rows and columns represent. For instance (please edit as appropriate):
@@ -82,7 +85,7 @@ For more details about the output files and reports, please refer to the
 
 nf-core/medseqcn was originally written by DM Hazelaar.
 
-We thank the following people for their extensive assistance in the development of this pipeline:
+<!-- We thank the following people for their extensive assistance in the development of this pipeline: -->
 
 <!-- TODO nf-core: If applicable, make list of people who have also contributed -->
 
@@ -99,7 +102,7 @@ For further information or help, don't hesitate to get in touch on the [Slack `#
 
 <!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
 
-An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
+<!-- TODO An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 
 You can cite the `nf-core` publication as follows:
 
@@ -107,4 +110,4 @@ You can cite the `nf-core` publication as follows:
 >
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 >
-> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
+> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x). -->

@@ -23,17 +23,17 @@ This pipeline was developed using the nf-core template and adheres to nf-core co
 
 1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
 2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
-3. Adapter removal ([`fastp`])(https://github.com/OpenGene/fastp)
-4. Read for alignment ([`bwa`])(https://bio-bwa.sourceforge.net/bwa.shtml)
-5. Sorting and indexing of bam file ([`samtools_sort`])(http://www.htslib.org/doc/samtools-sort.html)  ([`samtools_index`])(http://www.htslib.org/doc/samtools-index.html)
+3. Adapter removal ([`fastp`](https://github.com/OpenGene/fastp))
+4. Read for alignment ([`bwa`](https://bio-bwa.sourceforge.net/bwa.shtml))
+5. Sorting and indexing of bam file ([`samtools_sort`](http://www.htslib.org/doc/samtools-sort.html)  ([`samtools_index`])(http://www.htslib.org/doc/samtools-index.html))
 6. (Med-seq only) extract background reads
 7. (optional) fragment size selection
-8. (optional) remove duplicate reads ([`sambamba_markdup`])(https://lomereiter.github.io/sambamba/docs/sambamba-markdup.html)
+8. (optional) remove duplicate reads ([`sambamba_markdup`](https://lomereiter.github.io/sambamba/docs/sambamba-markdup.html))
 9. (optional) Remove low MAPQ reads 
 10. (optional) Remove reads in blacklisted (ENCODE) regions 
-11. Get various summary statisics of bam file ([`samtools_coverage`])(http://wwwhttp://www.htslib.org/doc/samtools-coverage.html.htslib.org/doc/samtools-stats.html) ([`samtools_stats`])(http://www.htslib.org/doc/samtools-stats.html) ([`samtools_flagstat`])(http://www.htslib.org/doc/samtools-flagstat.html) ([`samtools_idxstats`])(http://www.htslib.org/doc/samtools-idxstats.html) 
-12. Counting binned reads ([`hmmcopy_readCounter`])(https://github.com/shahcompbio/hmmcopy_utils)
-13. Copy number profiling and tumor fraction estimation ([`ichorCNA`])(https://github.com/broadinstitute/ichorCNA)
+11. Get various summary statisics of bam file ([`samtools_coverage`](http://wwwhttp://www.htslib.org/doc/samtools-coverage.html.htslib.org/doc/samtools-stats.html)) ([`samtools_stats`](http://www.htslib.org/doc/samtools-stats.html)) ([`samtools_flagstat`](http://www.htslib.org/doc/samtools-flagstat.html)) ([`samtools_idxstats`](http://www.htslib.org/doc/samtools-idxstats.html)) 
+12. Counting binned reads ([`hmmcopy_readCounter`](https://github.com/shahcompbio/hmmcopy_utils))
+13. Copy number profiling and tumor fraction estimation ([`ichorCNA`](https://github.com/broadinstitute/ichorCNA))
 
 ## Usage
 

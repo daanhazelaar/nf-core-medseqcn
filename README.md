@@ -25,7 +25,7 @@ This pipeline was developed using the nf-core template and adheres to nf-core co
 2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
 3. Adapter removal ([`fastp`](https://github.com/OpenGene/fastp))
 4. Read for alignment ([`bwa`](https://bio-bwa.sourceforge.net/bwa.shtml))
-5. Sorting and indexing of bam file ([`samtools_sort`](http://www.htslib.org/doc/samtools-sort.html)  ([`samtools_index`])(http://www.htslib.org/doc/samtools-index.html))
+5. Sorting and indexing of bam file ([`samtools_sort`](http://www.htslib.org/doc/samtools-sort.html)  ([`samtools_index`](http://www.htslib.org/doc/samtools-index.html)))
 6. (Med-seq only) extract background reads
 7. (optional) fragment size selection
 8. (optional) remove duplicate reads ([`sambamba_markdup`](https://lomereiter.github.io/sambamba/docs/sambamba-markdup.html))
@@ -67,6 +67,18 @@ nextflow run nf-core/medseqcn \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
    --outdir <OUTDIR>
+```
+
+I run the pipeline from a seperate directory and add some usefull additional arguments:
+```bash
+nextflow run ../../nf-core-medseqcn  \
+  -resume \
+  -with-report  \
+  -profile docker,arm \
+  --input ./samplesheet_hbd_swgs.csv \
+  --outdir ./results/ \
+  -c ./conf/hbd_swgs.config \
+  -work-dir ./work/ 
 ```
 
 > [!WARNING]

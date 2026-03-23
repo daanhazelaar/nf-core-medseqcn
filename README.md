@@ -68,4 +68,10 @@ If you would like to contribute to this pipeline, please see the [contributing g
 
 ## Citations
 
+If you use this pipeline in your research, please cite:
+
+> Hazelaar, D. M., Boers, R. G., Boers, J. B., de Weerd, V., Helmijr, J., Jansen, M. P. H. M., ... & Wilting, S. M. (2025).
+> Improved circulating tumor DNA profiling by simultaneous extraction of DNA methylation and copy number information from methylated DNA sequencing data.
+> _npj Precision Oncology_. doi: [10.1038/s41698-025-01237-5](https://doi.org/10.1038/s41698-025-01237-5)
+
 An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.

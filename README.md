@@ -36,8 +36,9 @@ First, prepare a samplesheet with your input data:
 `samplesheet.csv`:
 
 ```csv
-sample,fastq_1,fastq_2
-SAMPLE_1,sample1_R1.fastq.gz,sample1_R2.fastq.gz
+sample,fastq_1,fastq_2,methylated_bam,assay,sex
+SAMPLE_medseq,sample_medseq_R1.fastq.gz,sample_medseq_R2.fastq.gz,sample_medseq_methylated_read.bam,medseq,male
+SAMPLE_swgs,sample_swgs_R1.fastq.gz,sample_swgs_R2.fastq.gz,,swgs,male
 ```
 
 Then run the pipeline:

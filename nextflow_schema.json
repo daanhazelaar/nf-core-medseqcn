@@ -93,7 +93,19 @@
                 "panel_of_normals_medseq": {
                     "type": "string",
                     "format": "path",
-                    "description": "Panel of normals file for IchorCNA",
+                    "description": "Panel of normals file for IchorCNA (medseq assay)",
+                    "fa_icon": "fas fa-file-signature"
+                },
+                "panel_of_normals_quadm": {
+                    "type": "string",
+                    "format": "path",
+                    "description": "Panel of normals file for IchorCNA (quadm assay)",
+                    "fa_icon": "fas fa-file-signature"
+                },
+                "panel_of_normals_quadf": {
+                    "type": "string",
+                    "format": "path",
+                    "description": "Panel of normals file for IchorCNA (quadf assay)",
                     "fa_icon": "fas fa-file-signature"
                 },
                 "centromere": {

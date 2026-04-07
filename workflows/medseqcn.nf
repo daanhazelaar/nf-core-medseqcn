@@ -185,13 +185,6 @@ workflow MEDSEQCN {
         PREPARE_REFERENCE_GENOME.out.fasta.map{[ [:], it]}
     )
 
-    // MUDOLE: SAMTOOLS_COVERAGE
-    SAMTOOLS_COVERAGE (
-        BAM_SORT_STATS_SAMTOOLS.out.bam.join(BAM_SORT_STATS_SAMTOOLS.out.bai),
-        PREPARE_REFERENCE_GENOME.out.fasta.map{[ [:], it]},
-        PREPARE_REFERENCE_GENOME.out.fai.map{[ [:], it]}
-    )
-
     // SUBWORKFLOW: EQUALIZE_COVERAGE (optional)
     // Downsample the higher-coverage sample within each comparison pair
     // (quadf<->swgs, quadm<->medseq) so both members have equal read depth
@@ -204,6 +197,17 @@ workflow MEDSEQCN {
             ch_samplesheet
         )
     }
+
+    // MUDOLE: SAMTOOLS_COVERAGE
+    // Runs on equalized BAMs when equalize_coverage is enabled so that the
+    // coverage stats and the published _processed.bam reflect the same data.
+    SAMTOOLS_COVERAGE (
+        (params.equalize_coverage
+            ? EQUALIZE_COVERAGE.out.bam.join(EQUALIZE_COVERAGE.out.bai)
+            : BAM_SORT_STATS_SAMTOOLS.out.bam.join(BAM_SORT_STATS_SAMTOOLS.out.bai)),
+        PREPARE_REFERENCE_GENOME.out.fasta.map{[ [:], it]},
+        PREPARE_REFERENCE_GENOME.out.fai.map{[ [:], it]}
+    )
 
     // MUDOLE: HMMCOPY_READCOUNTER
     HMMCOPY_READCOUNTER (

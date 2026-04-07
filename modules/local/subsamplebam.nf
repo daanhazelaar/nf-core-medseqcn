@@ -16,22 +16,31 @@ process SUBSAMPLE_BAM {
 
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
-    // samtools view -s takes seed.fraction (e.g. 42.75 = seed 42, keep 75%)
-    def subsample_seed_frac = 42 + fraction
-    """
-    if (( \$(echo "${fraction} < 1.0" | bc -l) )); then
+    // Groovy conditional: evaluated by Nextflow before the script is submitted,
+    // so no shell arithmetic tools (bc, awk) are required inside the container.
+    if ( fraction < 1.0 ) {
+        // samtools view -s seed.fraction (e.g. 42.75 = seed 42, keep 75%)
+        def subsample_seed_frac = 42 + fraction
+        """
         samtools view \\
             -s ${subsample_seed_frac} \\
             -b \\
             -o ${prefix}_equalized.bam \\
             ${bam}
-    else
-        cp ${bam} ${prefix}_equalized.bam
-    fi
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
-    END_VERSIONS
-    """
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+        END_VERSIONS
+        """
+    } else {
+        """
+        cp ${bam} ${prefix}_equalized.bam
+
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+        END_VERSIONS
+        """
+    }
 }

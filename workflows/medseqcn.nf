@@ -19,6 +19,7 @@ include { SAMTOOLS_SORT as SAMTOOLS_SORT_RAW        } from '../modules/nf-core/s
 include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_RAW      } from '../modules/nf-core/samtools/index/main'
 
 include { SUBSET_MEDSEQ_DATA                        } from '../subworkflows/local/subsetmedseqdata.nf'
+include { EQUALIZE_COVERAGE                         } from '../subworkflows/local/equalizecoverage.nf'
 include { SIZE_SELECTION                            } from '../modules/local/sizeselection.nf'
 include { SAMBAMBA_MARKDUP                          } from '../modules/nf-core/sambamba/markdup/main'
 include { FILTER_MAPQ                               } from '../subworkflows/local/filtermapq.nf'
@@ -191,9 +192,24 @@ workflow MEDSEQCN {
         PREPARE_REFERENCE_GENOME.out.fai.map{[ [:], it]}
     )
 
+    // SUBWORKFLOW: EQUALIZE_COVERAGE (optional)
+    // Downsample the higher-coverage sample within each comparison pair
+    // (quadf<->swgs, quadm<->medseq) so both members have equal read depth
+    // before copy-number calling. Requires a patient column in the samplesheet.
+    if (params.equalize_coverage) {
+        EQUALIZE_COVERAGE (
+            BAM_SORT_STATS_SAMTOOLS.out.bam,
+            BAM_SORT_STATS_SAMTOOLS.out.bai,
+            BAM_SORT_STATS_SAMTOOLS.out.flagstat,
+            ch_samplesheet
+        )
+    }
+
     // MUDOLE: HMMCOPY_READCOUNTER
     HMMCOPY_READCOUNTER (
-        BAM_SORT_STATS_SAMTOOLS.out.bam.join(BAM_SORT_STATS_SAMTOOLS.out.bai),
+        (params.equalize_coverage
+            ? EQUALIZE_COVERAGE.out.bam.join(EQUALIZE_COVERAGE.out.bai)
+            : BAM_SORT_STATS_SAMTOOLS.out.bam.join(BAM_SORT_STATS_SAMTOOLS.out.bai)),
     )
 
     // MUDOLE: ICHORCNA_RUN_CUSTOM

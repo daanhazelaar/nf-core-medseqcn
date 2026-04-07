@@ -7,6 +7,12 @@
     "items": {
         "type": "object",
         "properties": {
+            "patient": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "meta": ["patient"],
+                "errorMessage": "Patient ID cannot contain spaces. Used to pair samples for coverage equalization (equalize_coverage)."
+            },
             "sample": {
                 "type": "string",
                 "pattern": "^\\S+$",
@@ -44,6 +50,6 @@
                 "errorMessage": "Sex of sample can be used in custom IchorCNA script"
             }
         },
-        "required": ["sample", "fastq_1", "assay"]
+        "required": ["patient", "sample", "fastq_1", "assay"]
     }
 }

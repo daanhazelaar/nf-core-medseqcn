@@ -41,6 +41,11 @@
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
                     "fa_icon": "fas fa-file-signature"
                 },
+                "equalize_coverage": {
+                    "type": "boolean",
+                    "description": "Downsample the higher-coverage sample within each comparison pair (quadf<->swgs, quadm<->medseq) to match the lower-coverage sample. Requires a patient column in the samplesheet.",
+                    "fa_icon": "fas fa-balance-scale"
+                },
                 "insert_size_selection": {
                     "type": "boolean",
                     "description": "Should reads with min/max insert size be selected.",

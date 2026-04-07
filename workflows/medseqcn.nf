@@ -201,12 +201,13 @@ workflow MEDSEQCN {
         .join(ch_samplesheet)
         .map{meta, wig, fastq, methylated_bam, assay, sex -> return[ meta, wig, assay, sex ]}
         .branch { meta, wig, assay, sex ->
-            medseq: assay == "medseq"
+            // medseq, quadm, quadf all use the medseq panel of normals (LpnPI-based digestion)
+            medseq_based: assay == "medseq" || assay == "quadm" || assay == "quadf"
             swgs: assay == "swgs"
         }
         .set{ ch_reads_split_assay_wig }
 
-    ch_reads_split_assay_wig.medseq
+    ch_reads_split_assay_wig.medseq_based
         .combine(Channel.value(file(params.panel_of_normals_medseq)))
         .mix(
             ch_reads_split_assay_wig.swgs

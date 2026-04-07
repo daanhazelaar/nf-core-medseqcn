@@ -35,8 +35,8 @@
             },
             "assay": {
                 "type": "string",
-                "pattern": "medseq|swgs",
-                "errorMessage": "Assay used for generating sequencing reads."
+                "pattern": "medseq|swgs|quadm|quadf",
+                "errorMessage": "Assay used for generating sequencing reads. Must be one of: medseq, swgs, quadm, quadf."
             },
             "sex": {
                 "type": "string",

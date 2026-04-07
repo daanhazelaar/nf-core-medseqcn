@@ -19,11 +19,15 @@ process SUBSAMPLE_BAM {
     // samtools view -s takes seed.fraction (e.g. 42.75 = seed 42, keep 75%)
     def subsample_seed_frac = 42 + fraction
     """
-    samtools view \\
-        -s ${subsample_seed_frac} \\
-        -b \\
-        -o ${prefix}_equalized.bam \\
-        ${bam}
+    if (( \$(echo "${fraction} < 1.0" | bc -l) )); then
+        samtools view \\
+            -s ${subsample_seed_frac} \\
+            -b \\
+            -o ${prefix}_equalized.bam \\
+            ${bam}
+    else
+        cp ${bam} ${prefix}_equalized.bam
+    fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

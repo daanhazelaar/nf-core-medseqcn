@@ -66,24 +66,17 @@ workflow EQUALIZE_COVERAGE {
 
             return result
         }
-        .branch { meta, bam, bai, fraction ->
-            subsample:   fraction < 1.0   // needs downsampling
-            passthrough: true              // already at target coverage
-        }
-        .set { ch_branched }
+        .set { ch_with_fractions }
 
-    // Downsample the higher-coverage member of each pair
-    SUBSAMPLE_BAM ( ch_branched.subsample )
+    // All samples pass through SUBSAMPLE_BAM.
+    // Fraction < 1.0 → samtools view -s (downsample).
+    // Fraction = 1.0 → cp (passthrough, renamed to _equalized.bam for consistency).
+    SUBSAMPLE_BAM ( ch_with_fractions )
 
     SAMTOOLS_INDEX ( SUBSAMPLE_BAM.out.bam )
 
-    // Recombine downsampled and pass-through samples into a single output channel
     SUBSAMPLE_BAM.out.bam
         .join(SAMTOOLS_INDEX.out.bai)
-        .mix(
-            ch_branched.passthrough
-                .map { meta, bam, bai, fraction -> [ meta, bam, bai ] }
-        )
         .set { out }
 
     emit:

@@ -16,11 +16,14 @@ process SUBSAMPLE_BAM {
 
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
+    // Capture input val into a local variable first — required for Nextflow <25.x
+    // where referencing a val input inside a nested Groovy def causes a scope error.
+    def frac = fraction
     // Groovy conditional: evaluated by Nextflow before the script is submitted,
     // so no shell arithmetic tools (bc, awk) are required inside the container.
-    if ( fraction < 1.0 ) {
+    if ( frac < 1.0 ) {
         // samtools view -s seed.fraction (e.g. 42.75 = seed 42, keep 75%)
-        def subsample_seed_frac = 42 + fraction
+        def subsample_seed_frac = 42 + frac
         """
         samtools view \\
             -s ${subsample_seed_frac} \\

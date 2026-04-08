@@ -28,6 +28,12 @@ include { REMOVE_BLACKLIST_REGIONS                  } from '../subworkflows/loca
 include { BAM_SORT_STATS_SAMTOOLS                   } from '../subworkflows/nf-core/bam_sort_stats_samtools/main'
 include { SAMTOOLS_COVERAGE                         } from '../modules/nf-core/samtools/coverage/main'
 
+include { SAMTOOLS_FLAGSTAT as FLAGSTAT_RAW             } from '../modules/nf-core/samtools/flagstat/main'
+include { SAMTOOLS_FLAGSTAT as FLAGSTAT_NOT_METHYLATED  } from '../modules/nf-core/samtools/flagstat/main'
+include { SAMTOOLS_FLAGSTAT as FLAGSTAT_MARKDUP         } from '../modules/nf-core/samtools/flagstat/main'
+include { SAMTOOLS_FLAGSTAT as FLAGSTAT_MAPQ            } from '../modules/nf-core/samtools/flagstat/main'
+include { SAMTOOLS_FLAGSTAT as FLAGSTAT_FINAL           } from '../modules/nf-core/samtools/flagstat/main'
+
 include { HMMCOPY_READCOUNTER                       } from '../modules/nf-core/hmmcopy/readcounter/main'
 include { ICHORCNA_RUN_CUSTOM                       } from '../modules/local/ichorcnaruncustom.nf'
 
@@ -100,14 +106,6 @@ workflow MEDSEQCN {
         )
     )
 
-    // MODULE: MULTIQC
-    MULTIQC (
-        ch_multiqc_files.collect(),
-        ch_multiqc_config.toList(),
-        ch_multiqc_custom_config.toList(),
-        ch_multiqc_logo.toList()
-    )
-
     // MODULE: FASTP
     discard_trimmed_pass = false
     save_trimmed_fail = false
@@ -140,12 +138,22 @@ workflow MEDSEQCN {
         SAMTOOLS_SORT_RAW.out.bam
     )
 
+    // Read attrition step 1: after initial sort+index (raw aligned reads)
+    FLAGSTAT_RAW (
+        SAMTOOLS_SORT_RAW.out.bam.join(SAMTOOLS_INDEX_RAW.out.bai)
+    )
+
     // SUBWORKFLOW: SUBSET_MEDSEQ_DATA
     SUBSET_MEDSEQ_DATA (
         SAMTOOLS_SORT_RAW.out.bam,
         SAMTOOLS_INDEX_RAW.out.bai,
         ch_samplesheet,
         PREPARE_REFERENCE_GENOME.out.fasta
+    )
+
+    // Read attrition step 2: after methylated-read removal (medseq/quadm/quadf) or passthrough (swgs)
+    FLAGSTAT_NOT_METHYLATED (
+        SUBSET_MEDSEQ_DATA.out.bam.join(SUBSET_MEDSEQ_DATA.out.bai)
     )
 
     // CUSTOM MUDOLE: SIZE_SELECTION
@@ -162,12 +170,22 @@ workflow MEDSEQCN {
         (params.insert_size_selection ? SIZE_SELECTION.out.bam : SUBSET_MEDSEQ_DATA.out.bam)
     )
 
+    // Read attrition step 3: after duplicate removal
+    FLAGSTAT_MARKDUP (
+        SAMBAMBA_MARKDUP.out.bam.join(SAMBAMBA_MARKDUP.out.bai)
+    )
+
     // SUBWORKFLOW: FILTER_MAPQ
     if (params.remove_read_low_mapq) {
         FILTER_MAPQ (
             SAMBAMBA_MARKDUP.out.bam,
             SAMBAMBA_MARKDUP.out.bai,
             params.min_mapq
+        )
+
+        // Read attrition step 4: after MAPQ filtering
+        FLAGSTAT_MAPQ (
+            FILTER_MAPQ.out.bam.join(FILTER_MAPQ.out.bai)
         )
     }
 
@@ -197,6 +215,13 @@ workflow MEDSEQCN {
             ch_samplesheet
         )
     }
+
+    // Read attrition step 5: final BAM (equalized if enabled, otherwise processed)
+    FLAGSTAT_FINAL (
+        params.equalize_coverage
+            ? EQUALIZE_COVERAGE.out.bam.join(EQUALIZE_COVERAGE.out.bai)
+            : BAM_SORT_STATS_SAMTOOLS.out.bam.join(BAM_SORT_STATS_SAMTOOLS.out.bai)
+    )
 
     // MUDOLE: SAMTOOLS_COVERAGE
     // Runs on equalized BAMs when equalize_coverage is enabled so that the
@@ -240,9 +265,28 @@ workflow MEDSEQCN {
         input_ichorcna,
         Channel.value(file(params.gc_wig)),
         Channel.value(file(params.map_wig)),
-        Channel.value(file(params.centromere)),        
+        Channel.value(file(params.centromere)),
     )
 
+    // Gather all QC outputs into MultiQC (must happen after all processes are called)
+    ch_multiqc_files = ch_multiqc_files.mix(FASTP.out.json.collect{it[1]})
+    ch_multiqc_files = ch_multiqc_files.mix(BAM_SORT_STATS_SAMTOOLS.out.stats.collect{it[1]})
+    ch_multiqc_files = ch_multiqc_files.mix(BAM_SORT_STATS_SAMTOOLS.out.flagstat.collect{it[1]})
+    ch_multiqc_files = ch_multiqc_files.mix(FLAGSTAT_RAW.out.flagstat.collect{it[1]})
+    ch_multiqc_files = ch_multiqc_files.mix(FLAGSTAT_NOT_METHYLATED.out.flagstat.collect{it[1]})
+    ch_multiqc_files = ch_multiqc_files.mix(FLAGSTAT_MARKDUP.out.flagstat.collect{it[1]})
+    if (params.remove_read_low_mapq) {
+        ch_multiqc_files = ch_multiqc_files.mix(FLAGSTAT_MAPQ.out.flagstat.collect{it[1]})
+    }
+    ch_multiqc_files = ch_multiqc_files.mix(FLAGSTAT_FINAL.out.flagstat.collect{it[1]})
+
+    // MODULE: MULTIQC
+    MULTIQC (
+        ch_multiqc_files.collect(),
+        ch_multiqc_config.toList(),
+        ch_multiqc_custom_config.toList(),
+        ch_multiqc_logo.toList()
+    )
 
     emit:
     multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html

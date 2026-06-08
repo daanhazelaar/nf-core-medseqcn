@@ -32,6 +32,7 @@ include { SAMTOOLS_FLAGSTAT as FLAGSTAT_RAW             } from '../modules/nf-co
 include { SAMTOOLS_FLAGSTAT as FLAGSTAT_NOT_METHYLATED  } from '../modules/nf-core/samtools/flagstat/main'
 include { SAMTOOLS_FLAGSTAT as FLAGSTAT_MARKDUP         } from '../modules/nf-core/samtools/flagstat/main'
 include { SAMTOOLS_FLAGSTAT as FLAGSTAT_MAPQ            } from '../modules/nf-core/samtools/flagstat/main'
+include { SAMTOOLS_FLAGSTAT as FLAGSTAT_BLACKLIST       } from '../modules/nf-core/samtools/flagstat/main'
 include { SAMTOOLS_FLAGSTAT as FLAGSTAT_FINAL           } from '../modules/nf-core/samtools/flagstat/main'
 
 include { HMMCOPY_READCOUNTER                       } from '../modules/nf-core/hmmcopy/readcounter/main'
@@ -203,6 +204,13 @@ workflow MEDSEQCN {
         PREPARE_REFERENCE_GENOME.out.fasta.map{[ [:], it]}
     )
 
+    // Read attrition step 5: after blacklist removal (and before optional
+    // equalization) — isolates the blacklist effect from coverage
+    // equalization downsampling, which is captured separately at step 6.
+    FLAGSTAT_BLACKLIST (
+        BAM_SORT_STATS_SAMTOOLS.out.bam.join(BAM_SORT_STATS_SAMTOOLS.out.bai)
+    )
+
     // SUBWORKFLOW: EQUALIZE_COVERAGE (optional)
     // Downsample the higher-coverage sample within each comparison pair
     // (quadf<->swgs, quadm<->medseq) so both members have equal read depth
@@ -216,7 +224,8 @@ workflow MEDSEQCN {
         )
     }
 
-    // Read attrition step 5: final BAM (equalized if enabled, otherwise processed)
+    // Read attrition step 6: final BAM (equalized if enabled, otherwise
+    // identical to step 5 — same data, useful as a sanity check).
     FLAGSTAT_FINAL (
         params.equalize_coverage
             ? EQUALIZE_COVERAGE.out.bam.join(EQUALIZE_COVERAGE.out.bai)
@@ -278,6 +287,7 @@ workflow MEDSEQCN {
     if (params.remove_read_low_mapq) {
         ch_multiqc_files = ch_multiqc_files.mix(FLAGSTAT_MAPQ.out.flagstat.collect{it[1]})
     }
+    ch_multiqc_files = ch_multiqc_files.mix(FLAGSTAT_BLACKLIST.out.flagstat.collect{it[1]})
     ch_multiqc_files = ch_multiqc_files.mix(FLAGSTAT_FINAL.out.flagstat.collect{it[1]})
 
     // MODULE: MULTIQC

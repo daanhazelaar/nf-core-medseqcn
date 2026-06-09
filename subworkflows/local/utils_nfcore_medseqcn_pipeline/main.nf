@@ -84,10 +84,12 @@ workflow PIPELINE_INITIALISATION {
         .fromSamplesheet("input")
         .map {
             meta, fastq_1, fastq_2, methylated_bam, assay, sex ->
+                // Stash assay/sex in meta so downstream channels don't need to re-join the samplesheet.
+                def meta_extra = [ assay: assay, sex: sex ]
                 if (!fastq_2) {
-                    return [ meta.id, meta + [ single_end:true ], [ fastq_1 ], methylated_bam, assay, sex ]
+                    return [ meta.id, meta + meta_extra + [ single_end:true ], [ fastq_1 ], methylated_bam, assay, sex ]
                 } else {
-                    return [ meta.id, meta + [ single_end:false ], [ fastq_1, fastq_2 ], methylated_bam, assay, sex ]
+                    return [ meta.id, meta + meta_extra + [ single_end:false ], [ fastq_1, fastq_2 ], methylated_bam, assay, sex ]
                 }
         }
         .groupTuple()

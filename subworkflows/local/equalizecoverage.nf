@@ -4,20 +4,18 @@ include { SAMTOOLS_INDEX } from '../../modules/nf-core/samtools/index/main'
 workflow EQUALIZE_COVERAGE {
 
     take:
-    bam         // channel: [ meta, bam ]
+    bam         // channel: [ meta, bam ]   (meta carries assay + methylation)
     bai         // channel: [ meta, bai ]
     flagstat    // channel: [ meta, flagstat_file ]
-    samplesheet // channel: [ meta, fastqs, methylated_bam, assay, sex ]
 
     main:
 
-    // Join bam, bai, flagstat and assay (from samplesheet); parse mapped read count
-    // from flagstat. Group samples by meta.patient to identify comparison pairs.
+    // Join bam, bai, flagstat; parse mapped read count from flagstat.
+    // Group samples by meta.patient to identify comparison pairs.
     bam
         .join(bai)
         .join(flagstat)
-        .join(samplesheet.map { meta, fastqs, methylated_bam, assay, sex -> [ meta, assay ] })
-        .map { meta, bam, bai, flagstat_file, assay ->
+        .map { meta, bam, bai, flagstat_file ->
             // flagstat line format: "123456 + 0 mapped (80.00% : N/A)"
             def mapped_reads = flagstat_file.text
                 .readLines()
@@ -26,27 +24,36 @@ workflow EQUALIZE_COVERAGE {
                 ?.toLong() ?: 0L
             // Use patient ID as group key; fall back to sample ID if patient not set
             def group_key = meta.patient ?: meta.id
-            return [ group_key, meta, bam, bai, assay, mapped_reads ]
+            return [ group_key, meta, bam, bai, meta.assay, meta.methylation, mapped_reads ]
         }
         .groupTuple(by: 0)
-        .flatMap { group_key, metas, bams, bais, assays, read_counts ->
+        .flatMap { group_key, metas, bams, bais, assays, methylations, read_counts ->
             // Build a list of per-sample maps for easier manipulation
-            def samples = [ metas, bams, bais, assays, read_counts ]
+            def samples = [ metas, bams, bais, assays, methylations, read_counts ]
                 .transpose()
-                .collect { m, b, bi, a, rc -> [ meta: m, bam: b, bai: bi, assay: a, reads: rc ] }
+                .collect { m, b, bi, a, meth, rc ->
+                    [ meta: m, bam: b, bai: bi, assay: a, methylation: meth, reads: rc ]
+                }
 
             def result  = []
             def handled = [] as Set
 
-            // Defined comparison pairs: quadf<->swgs and quadm<->medseq.
+            // Defined comparison pairs along the (assay, methylation) axis:
+            //   - quadf  (nonmeth) <-> swgs   (nonmeth)
+            //   - quadm  (nonmeth) <-> medseq (nonmeth)
+            //   - quadm  (meth)    <-> medseq (meth)
             // Within each pair the lower-coverage sample sets the target;
             // the higher-coverage sample is downsampled to match.
-            def pairs = [ [ 'quadf', 'swgs' ], [ 'quadm', 'medseq' ] ]
-            pairs.each { assay_a, assay_b ->
-                def s_a = samples.find { it.assay == assay_a }
-                def s_b = samples.find { it.assay == assay_b }
-                if (s_a) handled << assay_a
-                if (s_b) handled << assay_b
+            def pairs = [
+                [ [ 'quadf',  'nonmeth' ], [ 'swgs',   'nonmeth' ] ],
+                [ [ 'quadm',  'nonmeth' ], [ 'medseq', 'nonmeth' ] ],
+                [ [ 'quadm',  'meth'    ], [ 'medseq', 'meth'    ] ],
+            ]
+            pairs.each { key_a, key_b ->
+                def s_a = samples.find { it.assay == key_a[0] && it.methylation == key_a[1] }
+                def s_b = samples.find { it.assay == key_b[0] && it.methylation == key_b[1] }
+                if (s_a) handled << "${key_a[0]}_${key_a[1]}".toString()
+                if (s_b) handled << "${key_b[0]}_${key_b[1]}".toString()
 
                 if (s_a && s_b) {
                     def min_reads = Math.min(s_a.reads, s_b.reads) as double
@@ -59,8 +66,8 @@ workflow EQUALIZE_COVERAGE {
                 }
             }
 
-            // Any assay not covered by a defined pair passes through unchanged
-            samples.findAll { !(it.assay in handled) }.each { s ->
+            // Any sample not covered by a defined pair passes through unchanged
+            samples.findAll { !("${it.assay}_${it.methylation}".toString() in handled) }.each { s ->
                 result << [ s.meta, s.bam, s.bai, 1.0 ]
             }
 

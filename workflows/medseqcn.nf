@@ -29,7 +29,7 @@ include { BAM_SORT_STATS_SAMTOOLS                   } from '../subworkflows/nf-c
 include { SAMTOOLS_COVERAGE                         } from '../modules/nf-core/samtools/coverage/main'
 
 include { SAMTOOLS_FLAGSTAT as FLAGSTAT_RAW             } from '../modules/nf-core/samtools/flagstat/main'
-include { SAMTOOLS_FLAGSTAT as FLAGSTAT_NOT_METHYLATED  } from '../modules/nf-core/samtools/flagstat/main'
+include { SAMTOOLS_FLAGSTAT as FLAGSTAT_POST_SPLIT      } from '../modules/nf-core/samtools/flagstat/main'
 include { SAMTOOLS_FLAGSTAT as FLAGSTAT_MARKDUP         } from '../modules/nf-core/samtools/flagstat/main'
 include { SAMTOOLS_FLAGSTAT as FLAGSTAT_MAPQ            } from '../modules/nf-core/samtools/flagstat/main'
 include { SAMTOOLS_FLAGSTAT as FLAGSTAT_BLACKLIST       } from '../modules/nf-core/samtools/flagstat/main'
@@ -152,8 +152,9 @@ workflow MEDSEQCN {
         PREPARE_REFERENCE_GENOME.out.fasta
     )
 
-    // Read attrition step 2: after methylated-read removal (medseq/quadm/quadf) or passthrough (swgs)
-    FLAGSTAT_NOT_METHYLATED (
+    // Read attrition step 2: after methylation split. For medseq/quadm there are now two
+    // streams per sample (meth + nonmeth); quadf is nonmeth only; swgs passes through.
+    FLAGSTAT_POST_SPLIT (
         SUBSET_MEDSEQ_DATA.out.bam.join(SUBSET_MEDSEQ_DATA.out.bai)
     )
 
@@ -212,15 +213,15 @@ workflow MEDSEQCN {
     )
 
     // SUBWORKFLOW: EQUALIZE_COVERAGE (optional)
-    // Downsample the higher-coverage sample within each comparison pair
-    // (quadf<->swgs, quadm<->medseq) so both members have equal read depth
-    // before copy-number calling. Requires a patient column in the samplesheet.
+    // Downsample the higher-coverage sample within each comparison pair so both
+    // members have equal read depth before copy-number calling. Pairs are matched
+    // on (assay, methylation): quadf<->swgs (nonmeth), quadm<->medseq (nonmeth),
+    // quadm<->medseq (meth). Requires a patient column in the samplesheet.
     if (params.equalize_coverage) {
         EQUALIZE_COVERAGE (
             BAM_SORT_STATS_SAMTOOLS.out.bam,
             BAM_SORT_STATS_SAMTOOLS.out.bai,
-            BAM_SORT_STATS_SAMTOOLS.out.flagstat,
-            ch_samplesheet
+            BAM_SORT_STATS_SAMTOOLS.out.flagstat
         )
     }
 
@@ -251,13 +252,14 @@ workflow MEDSEQCN {
     )
 
     // MUDOLE: ICHORCNA_RUN_CUSTOM
+    // assay and sex are stashed in meta at samplesheet parse time, so no re-join needed.
     HMMCOPY_READCOUNTER.out.wig
-        .join(ch_samplesheet)
-        .map{meta, wig, fastq, methylated_bam, assay, sex -> return[ meta, wig, assay, sex ]}
-        .branch { meta, wig, assay, sex ->
-            // medseq, quadm, quadf all use the medseq panel of normals (LpnPI-based digestion)
-            medseq_based: assay == "medseq" || assay == "quadm" || assay == "quadf"
-            swgs: assay == "swgs"
+        .branch { meta, wig ->
+            // medseq, quadm, quadf all use the medseq panel of normals (LpnPI-based digestion).
+            // Note: the meth-fraction streams (quadm_meth, medseq_meth) also use the medseq PoN
+            // here — see CLAUDE.md / docs for the caveat that PoN was built on the nonmeth fraction.
+            medseq_based: meta.assay == "medseq" || meta.assay == "quadm" || meta.assay == "quadf"
+            swgs: meta.assay == "swgs"
         }
         .set{ ch_reads_split_assay_wig }
 
@@ -267,7 +269,7 @@ workflow MEDSEQCN {
             ch_reads_split_assay_wig.swgs
                 .combine(Channel.value(file(params.panel_of_normals_swgs)))
         )
-        .map{meta, wig, assay, sex, panel_of_normals -> return[ meta, wig, sex, panel_of_normals ]}
+        .map{meta, wig, panel_of_normals -> return[ meta, wig, meta.sex, panel_of_normals ]}
         .set{input_ichorcna}
 
     ICHORCNA_RUN_CUSTOM (
@@ -282,7 +284,7 @@ workflow MEDSEQCN {
     ch_multiqc_files = ch_multiqc_files.mix(BAM_SORT_STATS_SAMTOOLS.out.stats.collect{it[1]})
     ch_multiqc_files = ch_multiqc_files.mix(BAM_SORT_STATS_SAMTOOLS.out.flagstat.collect{it[1]})
     ch_multiqc_files = ch_multiqc_files.mix(FLAGSTAT_RAW.out.flagstat.collect{it[1]})
-    ch_multiqc_files = ch_multiqc_files.mix(FLAGSTAT_NOT_METHYLATED.out.flagstat.collect{it[1]})
+    ch_multiqc_files = ch_multiqc_files.mix(FLAGSTAT_POST_SPLIT.out.flagstat.collect{it[1]})
     ch_multiqc_files = ch_multiqc_files.mix(FLAGSTAT_MARKDUP.out.flagstat.collect{it[1]})
     if (params.remove_read_low_mapq) {
         ch_multiqc_files = ch_multiqc_files.mix(FLAGSTAT_MAPQ.out.flagstat.collect{it[1]})

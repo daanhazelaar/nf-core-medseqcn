@@ -20,6 +20,7 @@ include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_RAW      } from '../modules/nf-core/s
 
 include { SUBSET_MEDSEQ_DATA                        } from '../subworkflows/local/subsetmedseqdata.nf'
 include { EQUALIZE_COVERAGE                         } from '../subworkflows/local/equalizecoverage.nf'
+include { COMBINE_QUAD_FRACTIONS                    } from '../subworkflows/local/combinequadfractions.nf'
 include { SIZE_SELECTION                            } from '../modules/local/sizeselection.nf'
 include { SAMBAMBA_MARKDUP                          } from '../modules/nf-core/sambamba/markdup/main'
 include { FILTER_MAPQ                               } from '../subworkflows/local/filtermapq.nf'
@@ -233,22 +234,35 @@ workflow MEDSEQCN {
             : BAM_SORT_STATS_SAMTOOLS.out.bam.join(BAM_SORT_STATS_SAMTOOLS.out.bai)
     )
 
+    // SUBWORKFLOW: COMBINE_QUAD_FRACTIONS
+    // Merge the non-methylated QUAD-M + QUAD-F fractions per patient into a single
+    // "quadcombined" pseudo-sample. Runs on the final (equalized when enabled) BAMs,
+    // so the combined depth equals QUAD-F(nonmeth) + QUAD-M(nonmeth) post-equalization.
+    COMBINE_QUAD_FRACTIONS (
+        params.equalize_coverage ? EQUALIZE_COVERAGE.out.bam : BAM_SORT_STATS_SAMTOOLS.out.bam,
+        params.equalize_coverage ? EQUALIZE_COVERAGE.out.bai : BAM_SORT_STATS_SAMTOOLS.out.bai
+    )
+
     // MUDOLE: SAMTOOLS_COVERAGE
     // Runs on equalized BAMs when equalize_coverage is enabled so that the
     // coverage stats and the published _processed.bam reflect the same data.
+    // The combined QUAD pseudo-sample is mixed in so it gets the same stats.
     SAMTOOLS_COVERAGE (
         (params.equalize_coverage
             ? EQUALIZE_COVERAGE.out.bam.join(EQUALIZE_COVERAGE.out.bai)
-            : BAM_SORT_STATS_SAMTOOLS.out.bam.join(BAM_SORT_STATS_SAMTOOLS.out.bai)),
+            : BAM_SORT_STATS_SAMTOOLS.out.bam.join(BAM_SORT_STATS_SAMTOOLS.out.bai))
+            .mix(COMBINE_QUAD_FRACTIONS.out.bam.join(COMBINE_QUAD_FRACTIONS.out.bai)),
         PREPARE_REFERENCE_GENOME.out.fasta.map{[ [:], it]},
         PREPARE_REFERENCE_GENOME.out.fai.map{[ [:], it]}
     )
 
     // MUDOLE: HMMCOPY_READCOUNTER
+    // Per-fraction samples plus the combined QUAD pseudo-sample.
     HMMCOPY_READCOUNTER (
         (params.equalize_coverage
             ? EQUALIZE_COVERAGE.out.bam.join(EQUALIZE_COVERAGE.out.bai)
-            : BAM_SORT_STATS_SAMTOOLS.out.bam.join(BAM_SORT_STATS_SAMTOOLS.out.bai)),
+            : BAM_SORT_STATS_SAMTOOLS.out.bam.join(BAM_SORT_STATS_SAMTOOLS.out.bai))
+            .mix(COMBINE_QUAD_FRACTIONS.out.bam.join(COMBINE_QUAD_FRACTIONS.out.bai)),
     )
 
     // MUDOLE: ICHORCNA_RUN_CUSTOM
@@ -258,7 +272,7 @@ workflow MEDSEQCN {
             // medseq, quadm, quadf all use the medseq panel of normals (LpnPI-based digestion).
             // Note: the meth-fraction streams (quadm_meth, medseq_meth) also use the medseq PoN
             // here — see CLAUDE.md / docs for the caveat that PoN was built on the nonmeth fraction.
-            medseq_based: meta.assay == "medseq" || meta.assay == "quadm" || meta.assay == "quadf"
+            medseq_based: meta.assay == "medseq" || meta.assay == "quadm" || meta.assay == "quadf" || meta.assay == "quadcombined"
             swgs: meta.assay == "swgs"
         }
         .set{ ch_reads_split_assay_wig }
